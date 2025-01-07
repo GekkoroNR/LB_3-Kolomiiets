@@ -46,14 +46,13 @@ def get_item(param):
         cursor.execute('SELECT * FROM Items WHERE item_name = ?', (param,))
     resp = list(map(dict, cursor.fetchall()))
     if len(resp) == 0:
-        resp = 'This item doesn\'t exist'
+        resp = 'This item doesn\'t in list'
     con.close()
     return resp
 
 @app.route("/items", methods = ['POST'])
 def add_item():
     check_json()
-    print(request.json['item_name'])
     con = sqlite3.connect(catalog_name)
     con.row_factory = sqlite3.Row
     cursor = con.cursor()
@@ -95,26 +94,25 @@ def change_item(param):
         con.commit()
         con.close()
         return 'Your item was changed'
-@app.route("/items", methods = ['POST'])
-def delite_item():
+@app.route("/item/<param>", methods = ['DELETE'])
+def delete_item(param):
     check_json()
-    print(request.json['item_name'])
     con = sqlite3.connect(catalog_name)
     con.row_factory = sqlite3.Row
     cursor = con.cursor()
     if auth(cursor):
         con.close()
         return 'I don\'t know you'
-    elif check_existing(cursor, 1):
+    elif check_existing(cursor, 0, param):
         con.close()
-        return 'This item is already in list'
-    else:
-        cursor.execute('INSERT INTO Items (item_name, price) VALUES (?, ?)',
-                       (request.json['item_name'], request.json['price']))
-        edit_id = cursor.lastrowid
-        con.commit()
-        con.close()
-        return f'Your item successfully edited with ID: {edit_id}'
+        return 'This item doesn\'t in list'
+    if param.isdigit():                                          # Пошук по ID
+            cursor.execute('DELETE FROM Items WHERE id = ?', (param,))
+    else:                                                        # Пошук по назві
+        cursor.execute('DELETE FROM Items WHERE item_name = ?', (param,))
+    con.commit()
+    con.close()
+    return 'Item was deleted'
 
 def auth(cursor):
     cursor.execute('SELECT * FROM Users WHERE username = ? AND password = ?',
