@@ -1,6 +1,7 @@
 from flask import Flask, request, abort, jsonify
 import sqlite3
 
+from numpy.ma.core import identity
 from scipy.constants import value
 
 app = Flask(__name__)
@@ -69,8 +70,8 @@ def add_item():
         con.commit()
         con.close()
         return f'Your item successfully edited with ID: {edit_id}'
-@app.route("/items", methods = ['PUT'])
-def change_item():
+@app.route("/item/<param>", methods = ['PUT'])
+def change_item(param):
     check_json()
     con = sqlite3.connect(catalog_name)
     con.row_factory = sqlite3.Row
@@ -78,19 +79,19 @@ def change_item():
     if auth(cursor):                                                 #Авторизація
         con.close()
         return 'I don\'t know you'
-    elif check_existing(cursor, 0, 'param'):           #Перевірка існування об'єкту зміни
+    elif check_existing(cursor, 0, param):           #Перевірка існування об'єкту зміни
         con.close()
         return 'This item doesn\'t in list'
     elif check_existing(cursor, 1, 'new_item_name'):   #Перевірка унікальності нового ім'я
         con.close()
         return 'This name is already in list'
     else:
-        if str(request.json['param']).isdigit():                      #Пошук по ID
+        if param.isdigit():                      #Пошук по ID
             cursor.execute('UPDATE Items SET item_name = ?, price = ? WHERE id = ?',
-                           (request.json['new_item_name'], request.json['price'], request.json['param']))
+                           (request.json['new_item_name'], request.json['price'], param))
         else:                                                         #Пошук по назві
             cursor.execute('UPDATE Items SET item_name = ?, price = ? WHERE item_name = ?',
-                           (request.json['new_item_name'], request.json['price'], request.json['param']))
+                           (request.json['new_item_name'], request.json['price'], param))
         con.commit()
         con.close()
         return 'Your item was changed'
@@ -123,16 +124,20 @@ def auth(cursor):
         return True
 def check_existing(cursor, existing, param):
     if param in request.json:
-        if str(request.json[param]).isdigit():
-            cursor.execute('SELECT COUNT(*) FROM Items WHERE id = ?',
-                       (request.json[param],))
-        else:
-            cursor.execute('SELECT COUNT(*) FROM Items WHERE item_name = ?',
-                           (request.json[param],))
-        quantity = list(map(dict, cursor.fetchall()))
-        if quantity[0]['COUNT(*)'] == existing:
-            print(param)
-            return True
+        identity = request.json[param]
+    else:
+        print(param)
+        identity = param
+    if str(identity).isdigit():
+         cursor.execute('SELECT COUNT(*) FROM Items WHERE id = ?',
+                    (identity,))
+    else:
+        cursor.execute('SELECT COUNT(*) FROM Items WHERE item_name = ?',
+                        (identity,))
+    quantity = list(map(dict, cursor.fetchall()))
+    if quantity[0]['COUNT(*)'] == existing:
+        print(param)
+        return True
 
 
 if __name__ == '__main__':
