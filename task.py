@@ -17,13 +17,6 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS Users (
 con.commit()
 con.close()
 
-def check_json():
-    if 'Content-Type' not in request.headers:
-        return abort(400)
-    elif request.headers['Content-Type'] != 'application/json':
-        return  abort(400)
-
-
 @app.route("/")
 def say_hello():
     return '<h1>First page and nothing more</h1>'
@@ -78,16 +71,16 @@ def change_item(param):
     elif check_existing(cursor, 0, param):           #Перевірка існування об'єкту зміни
         con.close()
         return 'This item doesn\'t in list'
-    elif check_existing(cursor, 1, 'new_item_name'):   #Перевірка унікальності нового ім'я
+    elif check_existing(cursor, 1, 'item_name'):   #Перевірка унікальності нового ім'я
         con.close()
         return 'This name is already in list'
     else:
         if param.isdigit():                      #Пошук по ID
             cursor.execute('UPDATE Items SET item_name = ?, price = ? WHERE id = ?',
-                           (request.json['new_item_name'], request.json['price'], param))
+                           (request.json['item_name'], request.json['price'], param))
         else:                                                         #Пошук по назві
             cursor.execute('UPDATE Items SET item_name = ?, price = ? WHERE item_name = ?',
-                           (request.json['new_item_name'], request.json['price'], param))
+                           (request.json['item_name'], request.json['price'], param))
         con.commit()
         con.close()
         return 'Your item was changed'
@@ -111,6 +104,11 @@ def delete_item(param):
     con.close()
     return 'Item was deleted'
 
+def check_json():
+    if 'Content-Type' not in request.headers:
+        return abort(400)
+    elif request.headers['Content-Type'] != 'application/json':
+        return  abort(400)
 def auth(cursor):
     cursor.execute('SELECT * FROM Users WHERE username = ? AND password = ?',
                    (request.authorization['username'],request.authorization['password']))
@@ -121,7 +119,6 @@ def check_existing(cursor, existing, param):
     if param in request.json:
         identity = request.json[param]
     else:
-        print(param)
         identity = param
     if str(identity).isdigit():
          cursor.execute('SELECT COUNT(*) FROM Items WHERE id = ?',
@@ -131,7 +128,6 @@ def check_existing(cursor, existing, param):
                         (identity,))
     quantity = list(map(dict, cursor.fetchall()))
     if quantity[0]['COUNT(*)'] == existing:
-        print(param)
         return True
 
 
