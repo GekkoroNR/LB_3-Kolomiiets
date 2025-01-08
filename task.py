@@ -1,8 +1,5 @@
-from flask import Flask, request, abort, jsonify
+from flask import Flask, request, abort
 import sqlite3
-
-from numpy.ma.core import identity
-from scipy.constants import value
 
 app = Flask(__name__)
 catalog_name = 'global_catalog.db'
