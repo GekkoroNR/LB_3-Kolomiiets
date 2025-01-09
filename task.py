@@ -97,7 +97,7 @@ def delete_item(param):
         con.close()
         return 'This item doesn\'t in list'
     if param.isdigit():                                          # Пошук по ID
-            cursor.execute('DELETE FROM Items WHERE id = ?', (param,))
+        cursor.execute('DELETE FROM Items WHERE id = ?', (param,))
     else:                                                        # Пошук по назві
         cursor.execute('DELETE FROM Items WHERE item_name = ?', (param,))
     con.commit()
