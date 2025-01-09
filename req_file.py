@@ -23,6 +23,6 @@ match method:
         print(response.text)
     case 'DELETE':
         response = requests.delete(f'http://127.0.0.1:8000/item/{item}',
-                        headers=head, auth=('Admin', 'Password'))
+                        headers=head, json={}, auth=('Admin', 'Password'))
         print(response.text)
 

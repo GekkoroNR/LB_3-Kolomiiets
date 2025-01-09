@@ -116,7 +116,9 @@ def auth(cursor):
     if len(resp) == 0:
         return True
 def check_existing(cursor, existing, param):
-    if param in request.json:
+    if request.method == 'DELETE':
+        identity = param
+    elif param in request.json:
         identity = request.json[param]
     else:
         identity = param
